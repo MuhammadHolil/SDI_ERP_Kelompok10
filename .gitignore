@@ -1,0 +1,16 @@
+# Dependensi dan hasil build
+node_modules/
+dist/
+coverage/
+
+# Konfigurasi lokal yang berisi rahasia
+.env
+.env.*
+!.env.example
+
+# Log dan dokumen runtime
+*.log
+backend/src/public/download/
+
+.DS_Store
+/frontend/temp.env
