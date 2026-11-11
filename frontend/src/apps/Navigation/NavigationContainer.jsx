@@ -2,6 +2,9 @@ import { useState, useEffect } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { Button, Drawer, Layout, Menu } from 'antd';
 
+import { useSelector } from 'react-redux';
+import { selectCurrentAdmin } from '@/redux/auth/selectors';
+
 import { useAppContext } from '@/context/appContext';
 
 import useLanguage from '@/locale/useLanguage';
@@ -38,6 +41,11 @@ export default function Navigation() {
 
 function Sidebar({ collapsible, isMobile = false }) {
   let location = useLocation();
+
+  const currentAdmin = useSelector(selectCurrentAdmin);
+
+  const businessRoles = currentAdmin?.businessRoles || [];
+  const isOwner = currentAdmin?.role === 'owner';
 
   const { state: stateApp, appContextAction } = useAppContext();
   const { isNavMenuClose } = stateApp;
@@ -97,6 +105,35 @@ function Sidebar({ collapsible, isMobile = false }) {
       icon: <ReconciliationOutlined />,
     },
   ];
+
+  const menuRoles = {
+    customer: ['sales'],
+    quote: ['sales'],
+    invoice: ['finance'],
+    payment: ['finance'],
+  };
+
+  const ownerMenus = [
+    'paymentMode',
+    'taxes',
+    'generalSettings',
+  ];
+
+  const visibleItems = items.filter((item) => {
+    if (item.key === 'about') {
+      return true;
+    }
+
+    if (ownerMenus.includes(item.key)) {
+      return isOwner;
+    }
+
+  const permittedRoles = menuRoles[item.key];
+
+    return permittedRoles
+      ? permittedRoles.some((role) => businessRoles.includes(role))
+      : false;
+  });
 
   useEffect(() => {
     if (location)
@@ -166,7 +203,7 @@ function Sidebar({ collapsible, isMobile = false }) {
         )}
       </div>
       <Menu
-        items={items}
+        items={visibleItems}
         mode="inline"
         theme={'light'}
         selectedKeys={[currentPath]}

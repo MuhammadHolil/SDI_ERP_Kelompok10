@@ -16,6 +16,7 @@ const adminSchema = new Schema({
     lowercase: true,
     trim: true,
     required: true,
+    unique: true,
   },
   name: { type: String, required: true },
   surname: { type: String },
@@ -27,10 +28,26 @@ const adminSchema = new Schema({
     type: Date,
     default: Date.now,
   },
-  role: {
+    role: {
     type: String,
-    default: 'owner',
-    enum: ['owner'],
+    default: 'member',
+    enum: ['owner', 'member'],
+  },
+
+  businessRoles: {
+    type: [{
+      type: String,
+      enum: [
+        'sales',
+        'project_manager',
+        'expert',
+        'project_team',
+        'expense_approver',
+        'management',
+        'finance',
+      ],
+    }],
+    default: [],
   },
 });
 

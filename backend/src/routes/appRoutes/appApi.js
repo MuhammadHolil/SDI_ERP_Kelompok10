@@ -2,6 +2,10 @@ const express = require('express');
 const { catchErrors } = require('@/handlers/errorHandlers');
 const router = express.Router();
 
+const requireBusinessRole = require(
+  '@/middlewares/requireBusinessRole'
+);
+
 const appControllers = require('@/controllers/appControllers');
 const { routesList } = require('@/models/utils');
 
@@ -24,6 +28,22 @@ const routerApp = (entity, controller) => {
     router.route(`/${entity}/convert/:id`).get(catchErrors(controller['convert']));
   }
 };
+
+router.use('/client', requireBusinessRole('sales'));
+
+router.use('/quote', requireBusinessRole('sales'));
+
+router.get('/quote/convert/:id', (req, res) => {
+  return res.status(403).json({
+    success: false,
+    result: null,
+    message:
+      'Invoice harus diterbitkan melalui proses penagihan sesuai kontrak dan milestone.',
+  });
+});
+
+router.use('/invoice', requireBusinessRole('finance'));
+router.use('/payment', requireBusinessRole('finance'));
 
 routesList.forEach(({ entity, controllerName }) => {
   const controller = appControllers[controllerName];

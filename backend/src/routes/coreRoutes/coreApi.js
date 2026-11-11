@@ -1,5 +1,11 @@
 const express = require('express');
 
+const requireOwner = require('@/middlewares/requireOwner');
+
+const createAccount = require(
+  '@/controllers/coreControllers/adminController/createAccount'
+);
+
 const { catchErrors } = require('@/handlers/errorHandlers');
 
 const router = express.Router();
@@ -11,9 +17,13 @@ const { singleStorageUpload } = require('@/middlewares/uploadMiddleware');
 
 // //_______________________________ Admin management_______________________________
 
-router.route('/admin/read/:id').get(catchErrors(adminController.read));
+router
+  .route('/admin/read/:id')
+  .get(requireOwner, catchErrors(adminController.read));
 
-router.route('/admin/password-update/:id').patch(catchErrors(adminController.updatePassword));
+router
+  .route('/admin/password-update/:id')
+  .patch(requireOwner, catchErrors(adminController.updatePassword));
 
 //_______________________________ Admin Profile _______________________________
 
@@ -51,4 +61,7 @@ router
     catchErrors(settingController.updateBySettingKey)
   );
 router.route('/setting/updateManySetting').patch(catchErrors(settingController.updateManySetting));
+router
+  .route('/admin/create')
+  .post(requireOwner, catchErrors(createAccount));
 module.exports = router;

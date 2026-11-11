@@ -44,6 +44,7 @@ const authUser = async (req, res, { user, databasePassword, password, UserPasswo
         name: user.name,
         surname: user.surname,
         role: user.role,
+        businessRoles: user.businessRoles || [],
         email: user.email,
         photo: user.photo,
         token: token,

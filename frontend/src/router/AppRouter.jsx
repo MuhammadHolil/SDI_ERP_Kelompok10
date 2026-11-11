@@ -1,5 +1,9 @@
 import { lazy, useEffect } from 'react';
 
+import { useSelector } from 'react-redux';
+import { selectCurrentAdmin } from '@/redux/auth/selectors';
+import { Result } from 'antd';
+
 import {} from 'react-router-dom';
 import {} from 'react-router-dom';
 import { Navigate, useLocation, useRoutes } from 'react-router-dom';
@@ -9,6 +13,15 @@ import routes from './routes';
 
 export default function AppRouter() {
   let location = useLocation();
+  const currentAdmin = useSelector(selectCurrentAdmin);
+  const businessRoles = currentAdmin?.businessRoles || [];
+  const isOwner = currentAdmin?.role === 'owner';
+
+  const homePath = businessRoles.includes('sales')
+    ? '/customer'
+    : businessRoles.includes('finance')
+      ? '/invoice'
+      : '/about';
   const { state: stateApp, appContextAction } = useAppContext();
   const { app } = appContextAction;
 
@@ -38,7 +51,52 @@ export default function AppRouter() {
     }
   }, [location]);
 
-  let element = useRoutes(routesList);
+    const guardedRoutes = routesList.map((route) => {
+    if (route.path === '/') {
+      return {
+        ...route,
+        element: <Navigate to={homePath} replace />,
+      };
+    }
+
+    let permitted = true;
+
+    if (
+      route.path === '/payment/mode' ||
+      route.path === '/taxes' ||
+      route.path.startsWith('/settings')
+    ) {
+      permitted = isOwner;
+    } else if (
+      route.path === '/customer' ||
+      route.path === '/quote' ||
+      route.path.startsWith('/quote/')
+    ) {
+      permitted = businessRoles.includes('sales');
+    } else if (
+      route.path === '/invoice' ||
+      route.path.startsWith('/invoice/') ||
+      route.path === '/payment' ||
+      route.path.startsWith('/payment/')
+    ) {
+      permitted = businessRoles.includes('finance');
+    }
+
+    return {
+      ...route,
+      element: permitted ? (
+        route.element
+      ) : (
+        <Result
+          status="403"
+          title="Akses ditolak"
+          subTitle="Akun Anda tidak memiliki izin membuka halaman ini."
+        />
+      ),
+    };
+  });
+
+  let element = useRoutes(guardedRoutes);
 
   return element;
 }
