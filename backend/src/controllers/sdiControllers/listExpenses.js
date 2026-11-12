@@ -90,7 +90,7 @@ module.exports = async function listExpenses(req, res) {
 
   const result = await Expense.find(filter)
     .select(
-      '_id project category createdBy transactionDate description amount currency revision approvalStatus'
+      '_id project category vendor createdBy transactionDate description amount currency revision approvalStatus'
     )
     .populate({
       path: 'project',
@@ -103,6 +103,10 @@ module.exports = async function listExpenses(req, res) {
     .populate({
       path: 'createdBy',
       select: '_id name',
+    })
+    .populate({
+      path: 'vendor',
+      select: '_id code name',
     })
     .sort({ transactionDate: -1, _id: -1 })
     .skip((value.page - 1) * value.limit)

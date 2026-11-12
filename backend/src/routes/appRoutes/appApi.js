@@ -405,6 +405,103 @@ router.get(
   catchErrors(projectActualCost)
 );
 
+const vendorController = require(
+  '@/controllers/sdiControllers/vendor'
+);
+
+const vendorRequireOwner = require(
+  '@/middlewares/requireOwner'
+);
+
+const vendorListAccess = (req, res, next) => {
+  if (req.admin?.role === 'owner') {
+    return vendorRequireOwner(req, res, next);
+  }
+
+  return requireBusinessRole(
+    'project_manager',
+    'project_team',
+    'expense_approver',
+    'finance'
+  )(req, res, next);
+};
+
+router.post(
+  '/vendor/create',
+  vendorRequireOwner,
+  catchErrors(vendorController.create)
+);
+
+router.get(
+  '/vendor/list',
+  vendorListAccess,
+  catchErrors(vendorController.list)
+);
+
+const updateExpense = require(
+  '@/controllers/sdiControllers/updateExpense'
+);
+
+router.patch(
+  '/expense/update/:id',
+  requireBusinessRole('project_team'),
+  catchErrors(updateExpense)
+);
+
+const reviseExpense = require(
+  '@/controllers/sdiControllers/reviseExpense'
+);
+
+router.post(
+  '/expense/revise/:id',
+  requireBusinessRole('project_team'),
+  catchErrors(reviseExpense)
+);
+
+const expenseApprovalHistory = require(
+  '@/controllers/sdiControllers/expenseApprovalHistory'
+);
+
+router.get(
+  '/expense/approvals/:id',
+  requireBusinessRole(
+    'project_team',
+    'project_manager',
+    'expense_approver'
+  ),
+  catchErrors(expenseApprovalHistory)
+);
+
+const reviseTimesheet = require(
+  '@/controllers/sdiControllers/reviseTimesheet'
+);
+
+router.post(
+  '/timesheet/revise/:id',
+  requireBusinessRole('expert'),
+  catchErrors(reviseTimesheet)
+);
+
+const updateTimesheet = require(
+  '@/controllers/sdiControllers/updateTimesheet'
+);
+
+router.patch(
+  '/timesheet/update/:id',
+  requireBusinessRole('expert'),
+  catchErrors(updateTimesheet)
+);
+
+const timesheetApprovalHistory = require(
+  '@/controllers/sdiControllers/timesheetApprovalHistory'
+);
+
+router.get(
+  '/timesheet/approvals/:id',
+  requireBusinessRole('expert', 'project_manager'),
+  catchErrors(timesheetApprovalHistory)
+);
+
 routesList.forEach(({ entity, controllerName }) => {
   const controller = appControllers[controllerName];
   routerApp(entity, controller);

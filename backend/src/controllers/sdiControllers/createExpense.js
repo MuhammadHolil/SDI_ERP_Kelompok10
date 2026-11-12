@@ -8,6 +8,8 @@ const Contract = mongoose.model('Contract');
 const CostCategory = mongoose.model('CostCategory');
 const Expense = mongoose.model('Expense');
 
+const Vendor = mongoose.model('Vendor');
+
 const objectId = Joi.string()
   .pattern(/^[a-fA-F0-9]{24}$/)
   .required();
@@ -15,6 +17,11 @@ const objectId = Joi.string()
 const schema = Joi.object({
   project: objectId,
   category: objectId,
+
+  vendor: Joi.string()
+  .pattern(/^[a-fA-F0-9]{24}$/)
+  .allow(null)
+  .default(null),
 
   transactionDate: Joi.string()
     .pattern(/^\d{4}-\d{2}-\d{2}$/)
@@ -130,6 +137,17 @@ module.exports = async function createExpense(req, res) {
         fail(400, 'Kategori biaya harus tersedia dan aktif.');
       }
 
+      if (value.vendor !== null) {
+      const vendor = await Vendor.exists({
+        _id: value.vendor,
+        active: true,
+      }).session(session);
+
+     if (!vendor) {
+       fail(400, 'Vendor harus tersedia dan aktif.');
+     }
+   }
+
       const contract = await Contract.findById(project.contract)
         .session(session)
         .lean();
@@ -143,7 +161,7 @@ module.exports = async function createExpense(req, res) {
           {
             project: project._id,
             category: value.category,
-            vendor: null,
+            vendor: value.vendor,
             createdBy: req.admin._id,
             transactionDate,
             description: value.description,
