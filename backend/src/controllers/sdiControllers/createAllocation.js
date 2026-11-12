@@ -33,7 +33,10 @@ const schema = Joi.object({
     .required(),
 }).unknown(false);
 
-module.exports = async function createAllocation(req, res) {
+module.exports = async function createAllocation(
+  req,
+  res
+) {
   const { error, value } = schema.validate(req.body, {
     abortEarly: false,
   });
@@ -59,7 +62,8 @@ module.exports = async function createAllocation(req, res) {
     return res.status(404).json({
       success: false,
       result: null,
-      message: 'Proyek tidak ditemukan dalam cakupan akses Anda.',
+      message:
+        'Proyek tidak ditemukan dalam cakupan akses Anda.',
     });
   }
 
@@ -70,7 +74,8 @@ module.exports = async function createAllocation(req, res) {
     return res.status(400).json({
       success: false,
       result: null,
-      message: 'Periode alokasi harus dalam periode proyek.',
+      message:
+        'Periode alokasi harus dalam periode proyek.',
     });
   }
 
@@ -98,7 +103,58 @@ module.exports = async function createAllocation(req, res) {
     return res.status(400).json({
       success: false,
       result: null,
-      message: 'Akun tenaga ahli harus aktif dan memiliki peran expert.',
+      message:
+        'Akun tenaga ahli harus aktif dan memiliki peran expert.',
+    });
+  }
+
+  const capacityPeriods = expert.capacityPeriods || [];
+
+  const coveringPeriod = capacityPeriods.find(
+    (period) =>
+      value.startDate >= period.startDate &&
+      value.endDate <= period.endDate
+  );
+
+  if (!coveringPeriod) {
+    return res.status(409).json({
+      success: false,
+      result: null,
+      message:
+        'Kapasitas tenaga ahli belum tersedia untuk seluruh periode alokasi.',
+    });
+  }
+
+  const existingAllocations = await Allocation.find({
+    expert: expert._id,
+    status: {
+      $in: ['planned', 'active'],
+    },
+    startDate: {
+      $gte: coveringPeriod.startDate,
+    },
+    endDate: {
+      $lte: coveringPeriod.endDate,
+    },
+  })
+    .select('plannedHours')
+    .lean();
+
+  const allocatedHours = existingAllocations.reduce(
+    (total, allocation) =>
+      total + allocation.plannedHours,
+    0
+  );
+
+  const remainingHours =
+    coveringPeriod.availableHours - allocatedHours;
+
+  if (value.plannedHours > remainingHours) {
+    return res.status(409).json({
+      success: false,
+      result: null,
+      message:
+        `Sisa kapasitas tenaga ahli hanya ${remainingHours} jam.`,
     });
   }
 
@@ -116,14 +172,25 @@ module.exports = async function createAllocation(req, res) {
     return res.status(201).json({
       success: true,
       result,
-      message: 'Alokasi tenaga ahli berhasil dibuat.',
+      capacity: {
+        availableHours:
+          coveringPeriod.availableHours,
+        allocatedHoursBefore: allocatedHours,
+        allocatedHoursAfter:
+          allocatedHours + value.plannedHours,
+        remainingHoursAfter:
+          remainingHours - value.plannedHours,
+      },
+      message:
+        'Alokasi tenaga ahli berhasil dibuat.',
     });
   } catch (err) {
     if (err.code === 11000) {
       return res.status(409).json({
         success: false,
         result: null,
-        message: 'Alokasi tenaga ahli pada periode tersebut sudah tersedia.',
+        message:
+          'Alokasi tenaga ahli pada periode tersebut sudah tersedia.',
       });
     }
 

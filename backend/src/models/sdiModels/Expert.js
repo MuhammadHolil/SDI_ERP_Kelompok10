@@ -1,5 +1,35 @@
 const mongoose = require('mongoose');
 
+const capacityPeriodSchema = new mongoose.Schema(
+  {
+    startDate: {
+      type: Date,
+      required: true,
+    },
+
+    endDate: {
+      type: Date,
+      required: true,
+      validate: {
+        validator: function (value) {
+          return this.startDate && value >= this.startDate;
+        },
+        message:
+          'Tanggal akhir kapasitas tidak boleh sebelum tanggal mulai.',
+      },
+    },
+
+    availableHours: {
+      type: Number,
+      required: true,
+      min: 0,
+    },
+  },
+  {
+    _id: false,
+  }
+);
+
 const expertSchema = new mongoose.Schema(
   {
     code: {
@@ -27,8 +57,14 @@ const expertSchema = new mongoose.Schema(
     },
 
     capacityPeriods: {
-      type: [mongoose.Schema.Types.Mixed],
+      type: [capacityPeriodSchema],
       default: [],
+    },
+
+    capacityRevision: {
+      type: Number,
+      default: 0,
+      min: 0,
     },
 
     active: {

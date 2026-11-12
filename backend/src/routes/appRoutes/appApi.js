@@ -48,6 +48,10 @@ const requireBusinessRole = require(
   '@/middlewares/requireBusinessRole'
 );
 
+const requireOwnerForWrite = require(
+  '@/middlewares/requireOwnerForWrite'
+);
+
 const appControllers = require('@/controllers/appControllers');
 const { routesList } = require('@/models/utils');
 
@@ -202,6 +206,22 @@ router.get(
   '/expert/list',
   expertListAccess,
   catchErrors(expertController.list)
+);
+
+const expertCapacity = require(
+  '@/controllers/sdiControllers/expertCapacity'
+);
+
+router.get(
+  '/expert/capacity/:id',
+  expertListAccess,
+  catchErrors(expertCapacity.read)
+);
+
+router.put(
+  '/expert/capacity/:id',
+  expertRequireOwner,
+  catchErrors(expertCapacity.update)
 );
 
 const expertRateController = require(
@@ -501,6 +521,9 @@ router.get(
   requireBusinessRole('expert', 'project_manager'),
   catchErrors(timesheetApprovalHistory)
 );
+
+router.use('/taxes', requireOwnerForWrite);
+router.use('/paymentmode', requireOwnerForWrite);
 
 routesList.forEach(({ entity, controllerName }) => {
   const controller = appControllers[controllerName];
