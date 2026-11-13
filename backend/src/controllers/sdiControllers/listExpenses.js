@@ -92,6 +92,9 @@ module.exports = async function listExpenses(req, res) {
     .select(
       '_id project category vendor createdBy transactionDate description amount currency revision approvalStatus'
     )
+    .select(
+      '_id project category vendor createdBy transactionDate description amount currency revision approvalStatus evidence'
+    )
     .populate({
       path: 'project',
       select: '_id code name',

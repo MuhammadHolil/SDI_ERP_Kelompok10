@@ -5,6 +5,18 @@ import { Navigate } from 'react-router-dom';
 const Logout = lazy(() => import('@/pages/Logout.jsx'));
 const NotFound = lazy(() => import('@/pages/NotFound.jsx'));
 
+const ExpenseReview = lazy(() => import('@/pages/Expense/ExpenseReview'));
+
+const Expense = lazy(() => import('@/pages/Expense'));
+
+const Timesheet = lazy(() => import('@/pages/Timesheet'));
+
+const Project = lazy(() => import('@/pages/Project'));
+
+const ProjectRead = lazy(() =>
+  import('@/pages/Project/ProjectRead')
+);
+
 const Dashboard = lazy(() => import('@/pages/Dashboard'));
 const Customer = lazy(() => import('@/pages/Customer'));
 const Invoice = lazy(() => import('@/pages/Invoice'));
@@ -27,11 +39,33 @@ const Taxes = lazy(() => import('@/pages/Taxes'));
 
 const Profile = lazy(() => import('@/pages/Profile'));
 
+const TimesheetReview = lazy(() =>
+  import('@/pages/Timesheet/TimesheetReview')
+);
+
 const About = lazy(() => import('@/pages/About'));
 
 let routes = {
   expense: [],
   default: [
+    {
+      path: '/project',
+      element: <Project />,
+    },
+    { path: '/expense', element: <Expense /> },
+    { path: '/expense-review', element: <ExpenseReview /> },
+    {
+      path: '/timesheet-review',
+      element: <TimesheetReview />,
+    },
+    {
+      path: '/project/read/:id',
+      element: <ProjectRead />,
+    },
+    {
+      path: '/timesheet',
+      element: <Timesheet />,
+    },
     {
       path: '/login',
       element: <Navigate to="/" />,

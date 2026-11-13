@@ -63,9 +63,38 @@ function Sidebar({ collapsible, isMobile = false }) {
       label: <Link to={'/'}>{translate('dashboard')}</Link>,
     },
     {
+     key: 'expense',
+     icon: <WalletOutlined />,
+     label: <Link to="/expense">Pengeluaran</Link>,
+    },
+    {
+     key: 'expense-review',
+     icon: <FileOutlined />,
+     label: <Link to="/expense-review">Periksa Pengeluaran</Link>,
+    },
+    {
+      key: 'timesheet-review',
+      icon: <FileSyncOutlined />,
+      label: (
+        <Link to="/timesheet-review">
+          Periksa Timesheet
+        </Link>
+      ),
+    },
+    {
+      key: 'timesheet',
+      icon: <UserOutlined />,
+      label: <Link to="/timesheet">Timesheet</Link>,
+    },
+    {
       key: 'customer',
       icon: <CustomerServiceOutlined />,
       label: <Link to={'/customer'}>{translate('customers')}</Link>,
+    },
+    {
+      key: 'project',
+      icon: <FileOutlined />,
+      label: <Link to="/project">Proyek</Link>,
     },
 
     {
@@ -111,6 +140,11 @@ function Sidebar({ collapsible, isMobile = false }) {
     quote: ['sales'],
     invoice: ['finance'],
     payment: ['finance'],
+    project: ['project_manager'],
+    timesheet: ['expert'],
+    expense: ['project_team'],
+    'expense-review': ['expense_approver'],
+    'timesheet-review': ['project_manager'],
   };
 
   const ownerMenus = [

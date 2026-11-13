@@ -17,11 +17,16 @@ export default function AppRouter() {
   const businessRoles = currentAdmin?.businessRoles || [];
   const isOwner = currentAdmin?.role === 'owner';
 
-  const homePath = businessRoles.includes('sales')
-    ? '/customer'
-    : businessRoles.includes('finance')
-      ? '/invoice'
-      : '/about';
+  const homePath = businessRoles.includes('project_manager')
+    ? '/project'
+    : businessRoles.includes('sales')
+      ? '/customer'
+      : businessRoles.includes('finance')
+        ? '/invoice'
+        : businessRoles.includes('expert')
+          ? '/timesheet'
+          : '/about';
+
   const { state: stateApp, appContextAction } = useAppContext();
   const { app } = appContextAction;
 
@@ -60,13 +65,22 @@ export default function AppRouter() {
     }
 
     let permitted = true;
-
-    if (
-      route.path === '/payment/mode' ||
-      route.path === '/taxes' ||
-      route.path.startsWith('/settings')
+    if (route.path === '/expense-review') {
+      permitted = businessRoles.includes('expense_approver');
+      } else if (route.path === '/expense') {
+      permitted = businessRoles.includes('project_team');
+      } else if (
+      route.path === '/project' ||
+      route.path.startsWith('/project/')
     ) {
-      permitted = isOwner;
+      permitted = businessRoles.includes('project_manager');
+      } else if (route.path === '/timesheet-review') {
+      permitted = businessRoles.includes('project_manager');
+    } else if (
+      route.path === '/timesheet' ||
+      route.path.startsWith('/timesheet/')
+    ) {
+      permitted = businessRoles.includes('expert');
     } else if (
       route.path === '/customer' ||
       route.path === '/quote' ||
