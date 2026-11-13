@@ -12,6 +12,13 @@ const idSchema = Joi.string()
   .required();
 
 const bodySchema = Joi.object({
+  expectedRevision: Joi.number()
+    .integer()
+    .min(1)
+    .strict()
+    .required(),
+
+
   decision: Joi.string()
     .valid('approved', 'rejected')
     .required(),
@@ -99,6 +106,14 @@ module.exports = async function reviewTimesheet(req, res) {
         fail(409, 'Hanya timesheet submitted yang dapat diperiksa.');
       }
 
+      if (timesheet.revision !== value.expectedRevision) {
+        fail(
+          409,
+          'Revisi timesheet telah berubah. Muat ulang sebelum memutuskan.'
+        );
+      }
+
+
       if (!timesheet.updatedAt) {
         fail(409, 'Waktu pengajuan timesheet tidak tersedia.');
       }
@@ -106,7 +121,7 @@ module.exports = async function reviewTimesheet(req, res) {
       result = await Timesheet.findOneAndUpdate(
         {
           _id: timesheet._id,
-          revision: timesheet.revision,
+          revision: value.expectedRevision,
           approvalStatus: 'submitted',
         },
         {

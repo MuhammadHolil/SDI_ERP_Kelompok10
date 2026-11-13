@@ -10,6 +10,12 @@ const idSchema = Joi.string()
   .required();
 
 const bodySchema = Joi.object({
+  expectedRevision: Joi.number()
+    .integer()
+    .min(1)
+    .strict()
+    .required(),
+
   decision: Joi.string()
     .valid('approved', 'rejected')
     .required(),
@@ -86,6 +92,13 @@ module.exports = async function reviewExpense(req, res) {
         fail(409, 'Hanya expense submitted yang dapat diperiksa.');
       }
 
+      if (expense.revision !== value.expectedRevision) {
+        fail(
+          409,
+          'Revisi pengeluaran telah berubah. Muat ulang sebelum memutuskan.'
+        );
+      }
+
       if (!expense.updatedAt) {
         fail(409, 'Waktu pengajuan pengeluaran tidak tersedia.');
       }
@@ -131,7 +144,7 @@ module.exports = async function reviewExpense(req, res) {
       result = await Expense.findOneAndUpdate(
         {
           _id: expense._id,
-          revision: expense.revision,
+          revision: value.expectedRevision,
           approvalStatus: 'submitted',
         },
         {

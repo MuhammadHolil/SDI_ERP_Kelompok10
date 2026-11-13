@@ -8,7 +8,13 @@ const createAccount = require(
 
 const { catchErrors } = require('@/handlers/errorHandlers');
 
+const requireOwnerForWrite = require(
+  '@/middlewares/requireOwnerForWrite'
+);
+
 const router = express.Router();
+
+router.use('/setting', requireOwnerForWrite);
 
 const adminController = require('@/controllers/coreControllers/adminController');
 const settingController = require('@/controllers/coreControllers/settingController');

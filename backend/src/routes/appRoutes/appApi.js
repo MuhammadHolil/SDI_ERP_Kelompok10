@@ -159,6 +159,16 @@ router
     catchErrors(readProjectBudget)
   );
 
+  const listProjectBudgets = require(
+  '@/controllers/sdiControllers/listProjectBudgets'
+);
+
+router.get(
+  '/projectbudget/list',
+  requireBusinessRole('project_manager'),
+  catchErrors(listProjectBudgets)
+);
+
 router
   .route('/projectbudget/establish/:id')
   .post(
@@ -524,6 +534,30 @@ router.get(
 
 router.use('/taxes', requireOwnerForWrite);
 router.use('/paymentmode', requireOwnerForWrite);
+
+const serviceController = require(
+  '@/controllers/sdiControllers/service'
+);
+
+router.post(
+  '/service/create',
+  requireOwner,
+  catchErrors(serviceController.create)
+);
+
+const serviceListAccess = (req, res, next) => {
+  if (req.admin?.role === 'owner') {
+    return requireOwner(req, res, next);
+  }
+
+  return requireBusinessRole('sales')(req, res, next);
+};
+
+router.get(
+  '/service/list',
+  serviceListAccess,
+  catchErrors(serviceController.list)
+);
 
 routesList.forEach(({ entity, controllerName }) => {
   const controller = appControllers[controllerName];

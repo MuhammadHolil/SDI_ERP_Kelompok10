@@ -21,19 +21,33 @@ const createSchema = Joi.object({
     .pattern(/^[A-Z]{3}$/)
     .required(),
 
-  effectiveFrom: Joi.date().iso().required(),
+  effectiveFrom: Joi.string()
+    .pattern(/^\d{4}-\d{2}-\d{2}$/)
+    .required(),
 
-  effectiveTo: Joi.date()
-    .iso()
-    .min(Joi.ref('effectiveFrom'))
+  effectiveTo: Joi.string()
+    .pattern(/^\d{4}-\d{2}-\d{2}$/)
     .allow(null)
     .default(null),
-}).unknown(false);
+    }).unknown(false);
 
 const fail = (status, message) => {
   const error = new Error(message);
   error.status = status;
   throw error;
+};
+
+const parseCalendarDate = (value) => {
+  const date = new Date(`${value}T00:00:00.000Z`);
+
+  if (
+    Number.isNaN(date.getTime()) ||
+    date.toISOString().slice(0, 10) !== value
+  ) {
+    return null;
+  }
+
+  return date;
 };
 
 exports.create = async (req, res) => {
@@ -52,6 +66,41 @@ exports.create = async (req, res) => {
       })),
     });
   }
+
+  const effectiveFrom = parseCalendarDate(
+  value.effectiveFrom
+);
+
+const effectiveTo =
+  value.effectiveTo === null
+    ? null
+    : parseCalendarDate(value.effectiveTo);
+
+if (
+  effectiveFrom === null ||
+  (value.effectiveTo !== null && effectiveTo === null)
+) {
+  return res.status(400).json({
+    success: false,
+    result: null,
+    message: 'Tanggal berlaku tarif tidak valid.',
+  });
+}
+
+if (
+  effectiveTo !== null &&
+  effectiveTo < effectiveFrom
+) {
+  return res.status(400).json({
+    success: false,
+    result: null,
+    message: 'Tanggal akhir tarif tidak boleh sebelum tanggal mulai.',
+  });
+}
+
+// Gunakan tanggal kalender yang sudah diperiksa.
+value.effectiveFrom = effectiveFrom;
+value.effectiveTo = effectiveTo;
 
   const session = await mongoose.startSession();
   let result;

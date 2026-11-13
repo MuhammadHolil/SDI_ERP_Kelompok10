@@ -28,6 +28,19 @@ router.route('/:subPath/:directory/:file').get(function (req, res) {
       });
     }
 
+    const privateDownloadRoot = path.resolve(
+      rootDir,
+      'download'
+    );
+
+    if (isPathInside(absolutePath, privateDownloadRoot)) {
+      return res.status(403).json({
+        success: false,
+        result: null,
+        message: 'Dokumen harus diakses melalui endpoint unduh terautentikasi.',
+      });
+    }
+
     return res.sendFile(absolutePath, (error) => {
       if (error) {
         return res.status(404).json({
