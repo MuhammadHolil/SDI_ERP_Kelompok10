@@ -11,7 +11,15 @@ import {
 } from 'antd';
 import dayjs from 'dayjs';
 
+import ProjectBudget from './ProjectBudget';
+
 import { request } from '@/request';
+
+import ProjectMilestone from './ProjectMilestone';
+
+import ProjectAllocation from './ProjectAllocation';
+
+import ProjectExpenseAccess from './ProjectExpenseAccess';
 
 const formatDate = (value) =>
   value ? dayjs(value).format('DD/MM/YYYY') : '-';
@@ -26,6 +34,7 @@ const formatMoney = (value, currency = 'IDR') =>
 export default function ProjectRead() {
   const { id } = useParams();
   const navigate = useNavigate();
+  const [reload, setReload] = useState(0);
 
   const [project, setProject] = useState(null);
   const [budgets, setBudgets] = useState([]);
@@ -111,7 +120,7 @@ export default function ProjectRead() {
     return () => {
       active = false;
     };
-  }, [id]);
+  }, [id, reload]);
 
   const budgetColumns = [
     { title: 'Versi', dataIndex: 'version', key: 'version' },
@@ -209,9 +218,30 @@ export default function ProjectRead() {
             </Descriptions.Item>
           </Descriptions>
 
+          {!error && (
+            <ProjectAllocation project={project} />
+          )}
+          {!error && (
+            <ProjectExpenseAccess project={project} />
+          )}
           <Typography.Title level={4} style={{ marginTop: 24 }}>
             Anggaran
           </Typography.Title>
+          {!error && (
+            <ProjectMilestone
+              project={project}
+              milestones={milestones}
+              onSaved={() => setReload((value) => value + 1)}
+            />
+          )}
+
+          {!error && (
+          <ProjectBudget
+            projectId={id}
+            budgets={budgets}
+            onSaved={() => setReload((value) => value + 1)}
+          />
+           )}
           <Table
             rowKey="_id"
             columns={budgetColumns}

@@ -5,6 +5,7 @@ import dayjs from 'dayjs';
 import { useNavigate } from 'react-router-dom';
 
 import { request } from '@/request';
+import ProjectCreate from './ProjectCreate';
 
 export default function Project() {
   const navigate = useNavigate();
@@ -102,6 +103,7 @@ export default function Project() {
   return (
     <div>
       <Typography.Title level={2}>Daftar Proyek</Typography.Title>
+      <ProjectCreate onCreated={() => setReload((value) => value + 1)}/>
 
       <Button
         onClick={() => setReload((value) => value + 1)}

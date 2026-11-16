@@ -56,12 +56,38 @@ function Sidebar({ collapsible, isMobile = false }) {
   const translate = useLanguage();
   const navigate = useNavigate();
 
-  const items = [
+  const items = [ 
+    
     {
       key: 'dashboard',
       icon: <DashboardOutlined />,
       label: <Link to={'/'}>{translate('dashboard')}</Link>,
     },
+    
+    {
+      key: 'contract',
+      icon: <FileOutlined />,
+      label: <Link to="/contract">Kontrak</Link>,
+    },
+
+    {
+      key: 'expertMaster',
+      icon: <UserOutlined />,
+      label: <Link to="/expert">Tenaga Ahli</Link>,
+    },
+
+    {
+      key: 'masterData',
+      icon: <SettingOutlined />,
+      label: <Link to="/master-data">Master Data</Link>,
+    },
+
+    {
+      key: 'userAccount',
+      icon: <UserOutlined />,
+      label: <Link to="/user-account">Akun Pengguna</Link>,
+    },
+
     {
      key: 'expense',
      icon: <WalletOutlined />,
@@ -138,6 +164,7 @@ function Sidebar({ collapsible, isMobile = false }) {
   const menuRoles = {
     customer: ['sales'],
     quote: ['sales'],
+    contract: ['sales'],
     invoice: ['finance'],
     payment: ['finance'],
     project: ['project_manager'],
@@ -148,9 +175,12 @@ function Sidebar({ collapsible, isMobile = false }) {
   };
 
   const ownerMenus = [
-    'paymentMode',
-    'taxes',
-    'generalSettings',
+  'masterData',
+  'userAccount',
+  'expertMaster',
+  'paymentMode',
+  'taxes',
+  'generalSettings',
   ];
 
   const visibleItems = items.filter((item) => {

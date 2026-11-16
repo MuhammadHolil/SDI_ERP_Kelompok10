@@ -25,6 +25,17 @@ function includeToken() {
 }
 
 const request = {
+  put: async ({ entity, jsonData }) => {
+  try {
+    includeToken();
+
+    const response = await axios.put(entity, jsonData);
+
+    return response.data;
+  } catch (error) {
+    return errorHandler(error);
+  }
+},
   create: async ({ entity, jsonData }) => {
     try {
       includeToken();

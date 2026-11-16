@@ -64,8 +64,15 @@ export default function AppRouter() {
       };
     }
 
-    let permitted = true;
-    if (route.path === '/expense-review') {
+      let permitted = true;
+
+      if (
+      route.path === '/master-data' ||
+      route.path === '/user-account' ||
+      route.path === '/expert'
+    ) {
+      permitted = isOwner;
+    } else if (route.path === '/expense-review') {
       permitted = businessRoles.includes('expense_approver');
       } else if (route.path === '/expense') {
       permitted = businessRoles.includes('project_team');
@@ -83,7 +90,8 @@ export default function AppRouter() {
       permitted = businessRoles.includes('expert');
     } else if (
       route.path === '/customer' ||
-      route.path === '/quote' ||
+      route.path === '/contract' ||
+      route.path === '/quote'    ||
       route.path.startsWith('/quote/')
     ) {
       permitted = businessRoles.includes('sales');

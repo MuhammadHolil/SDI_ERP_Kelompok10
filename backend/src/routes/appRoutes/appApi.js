@@ -6,8 +6,16 @@ const listMilestones = require(
   '@/controllers/sdiControllers/listMilestones'
 );
 
+const listContracts = require(
+  '@/controllers/sdiControllers/listContracts'
+);
+
 const createMilestonePlan = require(
   '@/controllers/sdiControllers/createMilestonePlan'
+);
+
+const projectAccessOptions = require(
+  '@/controllers/sdiControllers/projectAccessOptions'
 );
 
 const establishProjectBudget = require(
@@ -136,12 +144,18 @@ router
 router
   .route('/costcategory/list')
   .get(
-    requireBusinessRole(
-      'project_manager',
-      'project_team',
-      'expense_approver',
-      'finance'
-    ),
+    (req, res, next) => {
+      if (req.admin?.role === 'owner') {
+        return requireOwner(req, res, next);
+      }
+
+      return requireBusinessRole(
+        'project_manager',
+        'project_team',
+        'expense_approver',
+        'finance'
+      )(req, res, next);
+    },
     catchErrors(costCategory.list)
   );
 
@@ -563,5 +577,17 @@ routesList.forEach(({ entity, controllerName }) => {
   const controller = appControllers[controllerName];
   routerApp(entity, controller);
 });
+
+router.get(
+  '/contract/list',
+  requireBusinessRole('sales', 'project_manager'),
+  catchErrors(listContracts)
+);
+
+router.get(
+  '/project/access-options/:id',
+  requireBusinessRole('project_manager'),
+  catchErrors(projectAccessOptions)
+);
 
 module.exports = router;

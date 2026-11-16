@@ -13,6 +13,14 @@ const Timesheet = lazy(() => import('@/pages/Timesheet'));
 
 const Project = lazy(() => import('@/pages/Project'));
 
+const MasterData = lazy(() => import('@/pages/MasterData'));
+
+const UserAccount = lazy(() => import('@/pages/UserAccount'));
+
+const Expert = lazy(() => import('@/pages/Expert'));
+
+const Contract = lazy(() => import('@/pages/Contract'));
+
 const ProjectRead = lazy(() =>
   import('@/pages/Project/ProjectRead')
 );
@@ -51,6 +59,24 @@ let routes = {
     {
       path: '/project',
       element: <Project />,
+    },
+
+    {
+      path: '/contract',
+      element: <Contract />,
+    },
+
+    {
+      path: '/expert',
+      element: <Expert />,
+    },
+    {
+      path: '/user-account',
+      element: <UserAccount />,
+    },
+    {
+      path: '/master-data',
+      element: <MasterData />,
     },
     { path: '/expense', element: <Expense /> },
     { path: '/expense-review', element: <ExpenseReview /> },

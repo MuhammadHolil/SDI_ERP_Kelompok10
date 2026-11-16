@@ -6,6 +6,10 @@ const createAccount = require(
   '@/controllers/coreControllers/adminController/createAccount'
 );
 
+const listAccounts = require(
+  '@/controllers/coreControllers/adminController/listAccounts'
+);
+
 const { catchErrors } = require('@/handlers/errorHandlers');
 
 const requireOwnerForWrite = require(
@@ -70,4 +74,8 @@ router.route('/setting/updateManySetting').patch(catchErrors(settingController.u
 router
   .route('/admin/create')
   .post(requireOwner, catchErrors(createAccount));
+
+router
+  .route('/admin/list')
+  .get(requireOwner, catchErrors(listAccounts));
 module.exports = router;
