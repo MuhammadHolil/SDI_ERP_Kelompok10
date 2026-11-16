@@ -87,6 +87,8 @@ export default function AppRouter() {
       route.path.startsWith('/quote/')
     ) {
       permitted = businessRoles.includes('sales');
+    } else if (route.path === '/payment/mode') {
+      permitted = isOwner;
     } else if (
       route.path === '/invoice' ||
       route.path.startsWith('/invoice/') ||
