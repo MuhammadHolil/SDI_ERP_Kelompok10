@@ -87,10 +87,10 @@ const quoteSchema = new mongoose.Schema({
     default: 0,
   },
   currency: {
-    type: String,
-    default: 'NA',
-    uppercase: true,
-    required: true,
+  type: String,
+  default: 'IDR',
+  uppercase: true,
+  required: true,
   },
   discount: {
     type: Number,
