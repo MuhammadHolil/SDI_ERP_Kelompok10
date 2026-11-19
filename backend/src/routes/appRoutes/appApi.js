@@ -82,6 +82,10 @@ const requireOwnerForWrite = require(
   '@/middlewares/requireOwnerForWrite'
 );
 
+const reverseMilestonePayment = require(
+  '@/controllers/sdiControllers/reverseMilestonePayment'
+);
+
 const appControllers = require('@/controllers/appControllers');
 const { routesList } = require('@/models/utils');
 
@@ -104,7 +108,62 @@ const routerApp = (entity, controller) => {
     router.route(`/${entity}/convert/:id`).get(catchErrors(controller['convert']));
   }
 };
+router.get(
+  '/client/search',
+  requireBusinessRole('sales', 'finance'),
+  catchErrors(async (req, res, next) => {
+    // Sales tetap menggunakan pencarian bawaan.
+    if (req.admin.businessRoles.includes('sales')) {
+      return next();
+    }
 
+    const q = req.query.q ?? '';
+
+    if (
+      typeof q !== 'string' ||
+      q.length > 100 ||
+      (req.query.fields !== undefined &&
+        req.query.fields !== 'name')
+    ) {
+      return res.status(400).json({
+        success: false,
+        result: [],
+        message: 'Parameter pencarian pelanggan tidak valid.',
+      });
+    }
+
+    // Finance hanya mencari nama pelanggan yang terkait
+    // dengan invoice aktif.
+    const clientIds = await mongoose.model('Invoice').distinct(
+      'client',
+      { removed: false }
+    );
+
+    const escaped = q.trim().replace(
+      /[.*+?^${}()|[\]\\]/g,
+      '\\$&'
+    );
+
+    const result = await mongoose.model('Client')
+      .find({
+        _id: { $in: clientIds },
+        removed: false,
+        ...(escaped
+          ? { name: { $regex: escaped, $options: 'i' } }
+          : {}),
+      })
+      .select('_id name')
+      .sort({ name: 1 })
+      .limit(20)
+      .lean();
+
+    return res.status(200).json({
+      success: true,
+      result,
+      message: 'Daftar pelanggan untuk pencarian invoice.',
+    });
+  })
+);
 router.use('/client', requireBusinessRole('sales'));
 
 router.use('/quote', requireBusinessRole('sales'));
@@ -783,6 +842,12 @@ router.post(
   '/change-control/review/:id',
   requireBusinessRole('management'),
   catchErrors(changeControl.review)
+);
+
+router.post(
+  '/billing/payment/:id/reverse',
+  requireBusinessRole('finance'),
+  catchErrors(reverseMilestonePayment)
 );
 
 routesList.forEach(({ entity, controllerName }) => {

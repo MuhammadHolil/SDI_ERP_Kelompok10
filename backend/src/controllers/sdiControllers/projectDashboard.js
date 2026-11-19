@@ -156,11 +156,12 @@ exports.read = async function read(req, res) {
         .lean();
 
       const payments = await Payment.find({
-        invoice: {
-          $in: invoices.map((item) => item._id),
-        },
-        removed: false,
-      })
+      invoice: {
+        $in: invoices.map((item) => item._id),
+      },
+      removed: false,
+      isReversed: { $ne: true },
+    })
         .setOptions({ autopopulate: false })
         .session(session)
         .lean();

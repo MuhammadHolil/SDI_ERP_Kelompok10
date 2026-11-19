@@ -75,7 +75,9 @@ exports.read = async function read(req, res) {
     invoice: invoice._id,
     removed: false,
   })
-    .select('number date amount currency ref description')
+    .select(
+      'number date amount currency ref description isReversed reversal'
+    )
     .sort({ date: 1, _id: 1 })
     .lean();
 
@@ -126,6 +128,12 @@ exports.create = async function create(req, res) {
         .lean();
 
       if (previous) {
+      if (previous.isReversed) {
+        fail(
+          409,
+          'Permintaan ini terkait pembayaran yang sudah dibatalkan. Muat ulang halaman sebelum membuat catatan baru.'
+        );
+      }
         const sameRequest =
           String(previous.createdBy) === String(req.admin._id) &&
           String(previous.invoice) === req.params.id &&

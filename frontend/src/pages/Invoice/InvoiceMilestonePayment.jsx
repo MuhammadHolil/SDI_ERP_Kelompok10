@@ -56,11 +56,15 @@ function validateAmount(value, remaining) {
 export default function InvoiceMilestonePayment() {
   const { id } = useParams();
   const navigate = useNavigate();
+
   const [form] = Form.useForm();
+  const [reverseForm] = Form.useForm();
 
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [reversing, setReversing] = useState(false);
+  const [reverseTarget, setReverseTarget] = useState(null);
   const [error, setError] = useState('');
   const [reload, setReload] = useState(0);
 
@@ -108,6 +112,8 @@ export default function InvoiceMilestonePayment() {
   }, [id, reload]);
 
   async function save(values) {
+    if (saving || reversing) return;
+
     setSaving(true);
 
     try {
@@ -144,7 +150,9 @@ export default function InvoiceMilestonePayment() {
   }
 
   function confirmPayment(values) {
-    if (!data?.invoice || saving || loading) return;
+    if (!data?.invoice || saving || reversing || loading) {
+      return;
+    }
 
     const validationError = validateAmount(
       values.amount,
@@ -167,33 +175,22 @@ export default function InvoiceMilestonePayment() {
       content: (
         <div>
           <p>
-            Invoice:{' '}
-            <strong>
-              {data.invoice.number}/{data.invoice.year}
-            </strong>
+            Invoice: {data.invoice.number}/{data.invoice.year}
           </p>
-
           <p>
-            Sisa piutang sebelum pembayaran:{' '}
-            <strong>
-              {money(data.remaining, data.invoice.currency)}
-            </strong>
+            Piutang sebelum pembayaran:{' '}
+            {money(data.remaining, data.invoice.currency)}
           </p>
-
           <p>
-            Nominal yang akan dicatat:{' '}
             <strong>
+              Nominal yang dicatat:{' '}
               {money(values.amount, data.invoice.currency)}
             </strong>
           </p>
-
           <p>
-            Sisa piutang setelah pembayaran:{' '}
-            <strong>
-              {money(remainingAfter, data.invoice.currency)}
-            </strong>
+            Piutang setelah pembayaran:{' '}
+            {money(remainingAfter, data.invoice.currency)}
           </p>
-
           <p>Pastikan nominal dan referensi bukti sudah benar.</p>
         </div>
       ),
@@ -204,13 +201,107 @@ export default function InvoiceMilestonePayment() {
     });
   }
 
+  async function reversePayment(values) {
+    if (!reverseTarget || reversing || saving) return;
+
+    setReversing(true);
+
+    try {
+      const response = await request.post({
+        entity: `billing/payment/${reverseTarget._id}/reverse`,
+        jsonData: {
+          reason: values.reason.trim(),
+          reference: values.reference.trim(),
+        },
+      });
+
+      if (!response?.success) {
+        message.error(
+          response?.message || 'Pembatalan gagal diproses.'
+        );
+        return;
+      }
+
+      message.success(response.message);
+      setReverseTarget(null);
+      reverseForm.resetFields();
+      form.resetFields();
+      setRequestKey(crypto.randomUUID());
+      setReload((value) => value + 1);
+    } catch {
+      message.error(
+        'Hasil pembatalan belum diketahui. Muat ulang riwayat sebelum mencoba lagi.'
+      );
+    } finally {
+      setReversing(false);
+    }
+  }
+
   const invoice = data?.invoice;
+  const busy = saving || reversing;
 
   const canPay =
     invoice &&
     Number.isFinite(data.remaining) &&
     data.remaining > 0 &&
     ['pending', 'sent'].includes(invoice.status);
+
+  const paymentColumns = [
+    {
+      title: 'Nomor',
+      dataIndex: 'number',
+    },
+    {
+      title: 'Tanggal',
+      dataIndex: 'date',
+      render: (value) => value?.slice(0, 10),
+    },
+    {
+      title: 'Nominal',
+      render: (_, row) => money(row.amount, row.currency),
+    },
+    {
+      title: 'Referensi',
+      dataIndex: 'ref',
+    },
+    {
+      title: 'Keterangan',
+      dataIndex: 'description',
+    },
+    {
+      title: 'Status catatan',
+      render: (_, row) =>
+        row.isReversed ? (
+          <div>
+            <strong>Dibatalkan</strong>
+            <div>{row.reversal?.reason}</div>
+            <div>
+              Referensi: {row.reversal?.reference || '-'}
+            </div>
+          </div>
+        ) : (
+          'Berlaku'
+        ),
+    },
+    {
+      title: 'Koreksi',
+      render: (_, row) =>
+        row.isReversed ? (
+          '-'
+        ) : (
+          <Button
+            danger
+            disabled={busy || loading}
+            onClick={() => {
+              reverseForm.resetFields();
+              setReverseTarget(row);
+            }}
+          >
+            Batalkan Catatan
+          </Button>
+        ),
+    },
+  ];
 
   return (
     <div>
@@ -219,6 +310,7 @@ export default function InvoiceMilestonePayment() {
       </Typography.Title>
 
       <Button
+        disabled={busy}
         style={{ marginBottom: 16 }}
         onClick={() => navigate('/invoice/billing')}
       >
@@ -226,9 +318,9 @@ export default function InvoiceMilestonePayment() {
       </Button>
 
       <Button
-        style={{ marginLeft: 8 }}
-        disabled={saving}
+        disabled={busy}
         loading={loading}
+        style={{ marginLeft: 8 }}
         onClick={() => setReload((value) => value + 1)}
       >
         Muat Ulang
@@ -271,7 +363,7 @@ export default function InvoiceMilestonePayment() {
               form={form}
               layout="vertical"
               onFinish={confirmPayment}
-              disabled={saving || loading}
+              disabled={busy || loading}
               style={{ marginTop: 24 }}
             >
               <Form.Item
@@ -388,34 +480,90 @@ export default function InvoiceMilestonePayment() {
           <Table
             rowKey="_id"
             dataSource={data.payments || []}
-            scroll={{ x: 600 }}
-            columns={[
-              {
-                title: 'Nomor',
-                dataIndex: 'number',
-              },
-              {
-                title: 'Tanggal',
-                dataIndex: 'date',
-                render: (value) => value?.slice(0, 10),
-              },
-              {
-                title: 'Nominal',
-                render: (_, row) =>
-                  money(row.amount, row.currency),
-              },
-              {
-                title: 'Referensi',
-                dataIndex: 'ref',
-              },
-              {
-                title: 'Keterangan',
-                dataIndex: 'description',
-              },
-            ]}
+            columns={paymentColumns}
+            scroll={{ x: 1000 }}
           />
         </>
       )}
+
+      <Modal
+        title="Batalkan Catatan Pembayaran"
+        open={Boolean(reverseTarget)}
+        footer={null}
+        closable={!reversing}
+        maskClosable={false}
+        keyboard={!reversing}
+        onCancel={() => {
+          if (!reversing) setReverseTarget(null);
+        }}
+      >
+        <Alert
+          type="warning"
+          showIcon
+          message="Pembayaran asli tetap disimpan dalam riwayat."
+          description="Tindakan ini membatalkan pencatatan dan menghitung ulang saldo invoice. Tindakan ini tidak melakukan pengembalian uang melalui bank."
+          style={{ marginBottom: 16 }}
+        />
+
+        <p>
+          Catatan pembayaran:{' '}
+          <strong>{reverseTarget?.number}</strong>
+        </p>
+
+        <p>
+          Nominal:{' '}
+          <strong>
+            {money(
+              reverseTarget?.amount,
+              reverseTarget?.currency
+            )}
+          </strong>
+        </p>
+
+        <Form
+          form={reverseForm}
+          layout="vertical"
+          disabled={reversing}
+          onFinish={reversePayment}
+        >
+          <Form.Item
+            name="reason"
+            label="Alasan pembatalan"
+            rules={[
+              {
+                required: true,
+                whitespace: true,
+                message: 'Alasan pembatalan wajib diisi.',
+              },
+            ]}
+          >
+            <Input.TextArea rows={3} maxLength={1500} />
+          </Form.Item>
+
+          <Form.Item
+            name="reference"
+            label="Referensi dokumen koreksi"
+            rules={[
+              {
+                required: true,
+                whitespace: true,
+                message: 'Referensi koreksi wajib diisi.',
+              },
+            ]}
+          >
+            <Input maxLength={300} />
+          </Form.Item>
+
+          <Button
+            danger
+            type="primary"
+            htmlType="submit"
+            loading={reversing}
+          >
+            Batalkan Catatan dan Hitung Ulang Saldo
+          </Button>
+        </Form>
+      </Modal>
     </div>
   );
 }

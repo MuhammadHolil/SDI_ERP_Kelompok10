@@ -75,5 +75,31 @@ paymentSchema.index(
   }
 );
 
+paymentSchema.add({
+  isReversed: {
+    type: Boolean,
+    default: false,
+  },
+  reversal: {
+    reason: {
+      type: String,
+      maxlength: 1500,
+    },
+    reference: {
+      type: String,
+      maxlength: 300,
+    },
+    reversedBy: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'Admin',
+    },
+    reversedAt: Date,
+    invoiceCreditBefore: Number,
+    invoiceCreditAfter: Number,
+    ledgerBefore: Number,
+    ledgerAfter: Number,
+  },
+});
+
 paymentSchema.plugin(require('mongoose-autopopulate'));
 module.exports = mongoose.model('Payment', paymentSchema);
