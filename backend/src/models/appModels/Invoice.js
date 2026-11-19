@@ -175,5 +175,60 @@ const invoiceSchema = new mongoose.Schema({
   },
 });
 
+invoiceSchema.add({
+  project: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Project',
+    default: null,
+  },
+  contract: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Contract',
+    default: null,
+  },
+  milestone: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Milestone',
+    default: null,
+  },
+  billingTermCode: {
+    type: String,
+    default: '',
+  },
+  billingClearance: {
+    reference: {
+      type: String,
+      maxlength: 300,
+    },
+    checkedBy: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'Admin',
+    },
+    checkedAt: Date,
+    contractVersion: Number,
+    milestoneVersion: Number,
+  },
+});
+
+invoiceSchema.index(
+  { milestone: 1 },
+  {
+    unique: true,
+    partialFilterExpression: {
+      milestone: { $type: 'objectId' },
+    },
+  }
+);
+
+invoiceSchema.index(
+  { number: 1, year: 1 },
+  {
+    unique: true,
+    partialFilterExpression: {
+      milestone: { $type: 'objectId' },
+    },
+  }
+);
+
 invoiceSchema.plugin(require('mongoose-autopopulate'));
 module.exports = mongoose.model('Invoice', invoiceSchema);

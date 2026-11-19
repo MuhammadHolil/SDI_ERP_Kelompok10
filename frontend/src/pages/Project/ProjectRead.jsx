@@ -13,6 +13,8 @@ import dayjs from 'dayjs';
 
 import ProjectBudget from './ProjectBudget';
 
+import ProjectMilestoneVerification from './ProjectMilestoneVerification';
+
 import { request } from '@/request';
 
 import ProjectMilestone from './ProjectMilestone';
@@ -249,6 +251,7 @@ export default function ProjectRead() {
             pagination={false}
           />
 
+
           <Typography.Title level={4} style={{ marginTop: 24 }}>
             Milestone
           </Typography.Title>
@@ -258,6 +261,13 @@ export default function ProjectRead() {
             dataSource={milestones}
             pagination={false}
           />
+
+          {!error && (
+            <ProjectMilestoneVerification
+              milestones={milestones}
+              onSaved={() => setReload((value) => value + 1)}
+          />
+          )}
 
           <Typography.Title level={4} style={{ marginTop: 24 }}>
             Biaya aktual

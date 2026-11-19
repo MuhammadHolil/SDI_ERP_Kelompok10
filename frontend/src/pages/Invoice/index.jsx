@@ -1,5 +1,6 @@
 import dayjs from 'dayjs';
-import { Tag } from 'antd';
+import { Button, Tag } from 'antd';
+import { useNavigate } from 'react-router-dom';
 import useLanguage from '@/locale/useLanguage';
 import { tagColor } from '@/utils/statusTagColor';
 
@@ -9,6 +10,7 @@ import InvoiceDataTableModule from '@/modules/InvoiceModule/InvoiceDataTableModu
 export default function Invoice() {
   const translate = useLanguage();
   const { dateFormat } = useDate();
+  const navigate = useNavigate();
   const entity = 'invoice';
   const { moneyFormatter } = useMoney();
 
@@ -101,5 +103,17 @@ export default function Invoice() {
     deleteModalLabels,
   };
 
-  return <InvoiceDataTableModule config={config} />;
+  return (
+  <>
+    <Button
+      type="primary"
+      style={{ marginBottom: 16 }}
+      onClick={() => navigate('/invoice/billing')}
+    >
+      Penagihan Milestone
+    </Button>
+
+    <InvoiceDataTableModule config={config} />
+  </>
+);
 }

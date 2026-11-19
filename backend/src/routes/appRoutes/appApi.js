@@ -2,8 +2,30 @@ const express = require('express');
 const { catchErrors } = require('@/handlers/errorHandlers');
 const router = express.Router();
 
+const mongoose = require('mongoose');
+
+const milestoneBilling = require(
+  '@/controllers/sdiControllers/milestoneBilling'
+);
+
+const projectDashboard = require(
+  '@/controllers/sdiControllers/projectDashboard'
+);
+
+const changeControl = require(
+  '@/controllers/sdiControllers/changeControl'
+);
+
+const milestonePayment = require(
+  '@/controllers/sdiControllers/milestonePayment'
+);
+
 const listMilestones = require(
   '@/controllers/sdiControllers/listMilestones'
+);
+
+const milestoneVerification = require(
+  '@/controllers/sdiControllers/milestoneVerification'
 );
 
 const listContracts = require(
@@ -203,6 +225,14 @@ router
     requireBusinessRole('project_manager'),
     catchErrors(listMilestones)
   );
+
+router
+  .route('/milestone/list/:projectId')
+  .get(
+    requireBusinessRole('project_manager'),
+    catchErrors(listMilestones)
+  );
+
 
 const expertController = require(
   '@/controllers/sdiControllers/expert'
@@ -573,6 +603,188 @@ router.get(
   catchErrors(serviceController.list)
 );
 
+router.get(
+  '/billing/milestones',
+  requireBusinessRole('finance'),
+  catchErrors(milestoneBilling.list)
+);
+
+router.post(
+  '/billing/invoice/:id',
+  requireBusinessRole('finance'),
+  catchErrors(milestoneBilling.create)
+);
+
+// Invoice baru harus berasal dari milestone.
+router.post('/invoice/create', (req, res) =>
+  res.status(403).json({
+    success: false,
+    result: null,
+    message: 'Gunakan halaman Penagihan Milestone.',
+  })
+);
+
+// Invoice milestone dikunci dari perubahan dan penghapusan biasa.
+const protectMilestoneInvoice = async (req, res, next) => {
+  if (!/^[a-fA-F0-9]{24}$/.test(req.params.id)) {
+    return res.status(400).json({
+      success: false,
+      result: null,
+      message: 'ID invoice tidak valid.',
+    });
+  }
+
+  const invoice = await mongoose.model('Invoice')
+    .findById(req.params.id)
+    .select('milestone')
+    .lean();
+
+  if (invoice?.milestone) {
+    return res.status(409).json({
+      success: false,
+      result: null,
+      message:
+        'Invoice milestone tidak dapat diubah atau dihapus melalui fitur biasa.',
+    });
+  }
+
+  return next();
+};
+
+router.patch(
+  '/invoice/update/:id',
+  catchErrors(protectMilestoneInvoice)
+);
+
+router.delete(
+  '/invoice/delete/:id',
+  catchErrors(protectMilestoneInvoice)
+);
+
+router.get(
+  '/billing/payments/:id',
+  requireBusinessRole('finance'),
+  catchErrors(milestonePayment.read)
+);
+
+router.post(
+  '/billing/payments/:id',
+  requireBusinessRole('finance'),
+  catchErrors(milestonePayment.create)
+);
+
+// Pembayaran invoice milestone menggunakan jalur transaksi yang baru.
+router.post(
+  '/payment/create',
+  catchErrors(async (req, res, next) => {
+    if (!/^[a-fA-F0-9]{24}$/.test(req.body.invoice || '')) {
+      return res.status(400).json({
+        success: false,
+        result: null,
+        message: 'ID invoice tidak valid.',
+      });
+    }
+
+    const invoice = await mongoose.model('Invoice')
+      .findById(req.body.invoice)
+      .select('milestone')
+      .lean();
+
+    if (invoice?.milestone) {
+      return res.status(403).json({
+        success: false,
+        result: null,
+        message: 'Gunakan halaman Pembayaran Invoice Milestone.',
+      });
+    }
+
+    return next();
+  })
+);
+
+// Pembayaran milestone dipertahankan sebagai riwayat transaksi.
+const protectMilestonePayment = async (req, res, next) => {
+  if (!/^[a-fA-F0-9]{24}$/.test(req.params.id || '')) {
+    return res.status(400).json({
+      success: false,
+      result: null,
+      message: 'ID pembayaran tidak valid.',
+    });
+  }
+
+  const payment = await mongoose.model('Payment')
+    .findById(req.params.id)
+    .setOptions({ autopopulate: false })
+    .select('invoice idempotencyKey')
+    .lean();
+
+  const invoice = payment
+    ? await mongoose.model('Invoice')
+        .findById(payment.invoice)
+        .select('milestone')
+        .lean()
+    : null;
+
+  if (payment?.idempotencyKey || invoice?.milestone) {
+    return res.status(409).json({
+      success: false,
+      result: null,
+      message:
+        'Pembayaran milestone tidak dapat diedit atau dihapus melalui fitur biasa.',
+    });
+  }
+
+  return next();
+};
+
+router.patch(
+  '/payment/update/:id',
+  catchErrors(protectMilestonePayment)
+);
+
+router.delete(
+  '/payment/delete/:id',
+  catchErrors(protectMilestonePayment)
+);
+
+router.get(
+  '/dashboard/projects',
+  requireBusinessRole(
+    'project_manager',
+    'management',
+    'finance'
+  ),
+  catchErrors(projectDashboard.list)
+);
+
+router.get(
+  '/dashboard/project/:id',
+  requireBusinessRole(
+    'project_manager',
+    'management',
+    'finance'
+  ),
+  catchErrors(projectDashboard.read)
+);
+
+router.get(
+  '/change-control/:id',
+  requireBusinessRole('project_manager', 'management'),
+  catchErrors(changeControl.read)
+);
+
+router.post(
+  '/change-control/:id/submit',
+  requireBusinessRole('project_manager'),
+  catchErrors(changeControl.submit)
+);
+
+router.post(
+  '/change-control/review/:id',
+  requireBusinessRole('management'),
+  catchErrors(changeControl.review)
+);
+
 routesList.forEach(({ entity, controllerName }) => {
   const controller = appControllers[controllerName];
   routerApp(entity, controller);
@@ -588,6 +800,18 @@ router.get(
   '/project/access-options/:id',
   requireBusinessRole('project_manager'),
   catchErrors(projectAccessOptions)
+);
+
+router.post(
+  '/milestone/verify/:id',
+  requireBusinessRole('project_manager'),
+  catchErrors(milestoneVerification.review)
+);
+
+router.get(
+  '/milestone/verification-history/:id',
+  requireBusinessRole('project_manager'),
+  catchErrors(milestoneVerification.history)
 );
 
 module.exports = router;

@@ -66,6 +66,28 @@ export default function AppRouter() {
 
       let permitted = true;
 
+      if (route.path === '/change-control') {
+      permitted = businessRoles.some((role) =>
+        ['project_manager', 'management'].includes(role)
+      );
+    } else if (route.path === '/dashboard-kpi') {
+      permitted = businessRoles.some((role) =>
+        ['project_manager', 'management', 'finance'].includes(role)
+      );
+    }
+
+      if (route.path === '/dashboard-kpi') {
+      permitted = businessRoles.some((role) =>
+        ['project_manager', 'management', 'finance'].includes(role)
+      );
+    } else if (
+      route.path === '/master-data' ||
+      route.path === '/user-account' ||
+      route.path === '/expert'
+    ) {
+      permitted = isOwner;
+    }
+
       if (
       route.path === '/master-data' ||
       route.path === '/user-account' ||

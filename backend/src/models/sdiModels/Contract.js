@@ -71,4 +71,11 @@ const contractSchema = new Schema({
   },
 });
 
+contractSchema.add({
+  billingRevision: {
+    type: Number,
+    default: 0,
+  },
+});
+
 module.exports = mongoose.model('Contract', contractSchema);

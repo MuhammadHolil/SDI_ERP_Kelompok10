@@ -70,6 +70,49 @@ const milestoneSchema = new Schema({
   },
 });
 
+milestoneSchema.add({
+  verification: {
+    type: new Schema(
+      {
+        decision: {
+          type: String,
+          enum: ['approved', 'rejected'],
+          required: true,
+        },
+        notes: {
+          type: String,
+          required: true,
+          maxlength: 1500,
+        },
+        reference: {
+          type: String,
+          default: '',
+          maxlength: 300,
+        },
+        decidedBy: {
+          type: Schema.Types.ObjectId,
+          ref: 'Admin',
+          required: true,
+        },
+        decidedAt: {
+          type: Date,
+          required: true,
+        },
+      },
+      { _id: false }
+    ),
+    default: null,
+  },
+});
+
+milestoneSchema.add({
+  billingInvoice: {
+    type: Schema.Types.ObjectId,
+    ref: 'Invoice',
+    default: null,
+  },
+});
+
 milestoneSchema.index(
   { project: 1, code: 1 },
   { unique: true }

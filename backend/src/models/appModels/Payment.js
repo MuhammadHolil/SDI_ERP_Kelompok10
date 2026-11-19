@@ -58,5 +58,22 @@ const paymentSchema = new mongoose.Schema({
     default: Date.now,
   },
 });
+
+paymentSchema.add({
+  idempotencyKey: {
+    type: String,
+  },
+});
+
+paymentSchema.index(
+  { idempotencyKey: 1 },
+  {
+    unique: true,
+    partialFilterExpression: {
+      idempotencyKey: { $type: 'string' },
+    },
+  }
+);
+
 paymentSchema.plugin(require('mongoose-autopopulate'));
 module.exports = mongoose.model('Payment', paymentSchema);

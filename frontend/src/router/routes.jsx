@@ -5,6 +5,18 @@ import { Navigate } from 'react-router-dom';
 const Logout = lazy(() => import('@/pages/Logout.jsx'));
 const NotFound = lazy(() => import('@/pages/NotFound.jsx'));
 
+const ChangeControl = lazy(() =>
+  import('@/pages/ChangeControl')
+);
+
+const InvoiceMilestonePayment = lazy(() =>
+  import('@/pages/Invoice/InvoiceMilestonePayment')
+);
+
+const ProjectDashboard = lazy(() =>
+  import('@/pages/ProjectDashboard')
+);
+
 const ExpenseReview = lazy(() => import('@/pages/Expense/ExpenseReview'));
 
 const Expense = lazy(() => import('@/pages/Expense'));
@@ -20,6 +32,10 @@ const UserAccount = lazy(() => import('@/pages/UserAccount'));
 const Expert = lazy(() => import('@/pages/Expert'));
 
 const Contract = lazy(() => import('@/pages/Contract'));
+
+const InvoiceMilestoneBilling = lazy(() =>
+  import('@/pages/Invoice/InvoiceMilestoneBilling')
+);
 
 const ProjectRead = lazy(() =>
   import('@/pages/Project/ProjectRead')
@@ -57,8 +73,27 @@ let routes = {
   expense: [],
   default: [
     {
+      path: '/change-control',
+      element: <ChangeControl />,
+    },
+    {
       path: '/project',
       element: <Project />,
+    },
+
+    {
+      path: '/dashboard-kpi',
+      element: <ProjectDashboard />,
+    },
+
+    {
+      path: '/invoice/milestone-payment/:id',
+      element: <InvoiceMilestonePayment />,
+    },
+
+    {
+     path: '/invoice/billing',
+     element: <InvoiceMilestoneBilling />,
     },
 
     {

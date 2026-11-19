@@ -103,6 +103,12 @@ export default function Project() {
   return (
     <div>
       <Typography.Title level={2}>Daftar Proyek</Typography.Title>
+       <Button
+         onClick={() => navigate('/dashboard-kpi')}
+         style={{ marginBottom: 16 }}
+       >
+         Dashboard KPI
+       </Button>
       <ProjectCreate onCreated={() => setReload((value) => value + 1)}/>
 
       <Button
@@ -111,6 +117,18 @@ export default function Project() {
       >
         Muat ulang
       </Button>
+
+       <Button
+      onClick={() => navigate('/change-control')}
+      style={{ marginBottom: 16, marginLeft: 8 }}
+    >
+        Pengajuan Perubahan
+      </Button>
+
+      <ProjectCreate
+        onCreated={() => setReload((value) => value + 1)}
+      />
+
 
       {error && (
         <Alert
